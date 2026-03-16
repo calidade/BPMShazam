@@ -5,71 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BPM → RPM Indoor</title>
 <style>
-body {
-  margin: 0;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-h1 { font-size: 6vw; margin-bottom: 30px; text-shadow: 0 0 15px rgba(0,0,0,0.6); }
-
-.panel {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 30px 20px;
-  margin-bottom: 30px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-  text-align: center;
-}
-
-.value {
-  font-size: 12vw;
-  font-weight: bold;
-  margin: 10px 0;
-  color: #00ffcc;
-  text-shadow: 0 0 15px rgba(0,255,204,0.6);
-}
-
-.label {
-  opacity: .8;
-  margin-bottom: 5px;
-  font-size: 4vw;
-}
-
-button {
-  width: 80%;
-  max-width: 300px;
-  padding: 20px;
-  margin: 10px 0;
-  font-size: 5vw;
-  border: none;
-  border-radius: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.2s;
-}
-
-button:active { transform: scale(0.97); box-shadow: 0 4px 8px rgba(0,0,0,0.3) inset; }
-.start { background: #00c853; color:white; box-shadow: 0 6px 15px rgba(0,200,83,0.4);}
-.measure { background: #2979ff; color:white; box-shadow: 0 6px 15px rgba(41,121,255,0.4);}
-.stop { background: #d50000; color:white; box-shadow: 0 6px 15px rgba(213,0,0,0.4); }
-
-@media (min-width:700px){
-  h1 { font-size: 48px; }
-  .value { font-size: 90px; }
-  .label { font-size: 22px; }
-  button { font-size: 24px; }
-}
+body{margin:0;font-family:Arial;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;text-align:center;padding:20px;}
+h1{font-size:6vw;margin-top:20px;}
+.panel{background:rgba(255,255,255,0.05);border-radius:15px;padding:20px;margin:15px auto;width:90%;max-width:400px;}
+.value{font-size:10vw;font-weight:bold;color:#00ffcc;}
+button{width:80%;padding:15px;font-size:5vw;margin:10px;border:none;border-radius:12px;cursor:pointer;}
+.start{background:#00c853;color:white;}
+.measure{background:#2979ff;color:white;}
+.stop{background:#d50000;color:white;}
 </style>
 </head>
 <body>
@@ -77,72 +20,65 @@ button:active { transform: scale(0.97); box-shadow: 0 4px 8px rgba(0,0,0,0.3) in
 <h1>BPM → RPM</h1>
 
 <div class="panel">
-  <div class="label">BPM</div>
+  <div>BPM</div>
   <div id="bpm" class="value">--</div>
 </div>
 
 <div class="panel">
-  <div class="label">RPM Ciclismo</div>
+  <div>RPM</div>
   <div id="rpm" class="value">--</div>
 </div>
 
 <button class="start" onclick="activateMic()">ACTIVAR MICRÓFONO</button>
 <button class="measure" onclick="startMeasuring()">EMPEZAR A CONTAR BPM</button>
-<button class="stop" onclick="stop()">DESACTIVAR</button>
+<button class="stop" onclick="stopAll()">DESACTIVAR</button>
 
 <script type="module">
-  import realtimeBpmAnalyzer from 'https://cdn.jsdelivr.net/npm/realtime-bpm-analyzer@5.0.1/+esm';
-</script>
-<script>
-let audioCtx, source, analyzer, bandpass;
-let runningMic=false;
-let measuring=false;
+import { createRealtimeBpmAnalyzer, getBiquadFilter } from 'https://cdn.jsdelivr.net/npm/realtime-bpm-analyzer@latest/+esm';
 
-// Activar micrófono (sin iniciar medición)
+let audioCtx, source, analyzer, lowpass;
+let micActive = false;
+let measuring = false;
+
 async function activateMic() {
-  if(runningMic) return;
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  if (micActive) return;
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   audioCtx = new AudioContext();
   source = audioCtx.createMediaStreamSource(stream);
 
-  // Filtro banda baja
-  bandpass = audioCtx.createBiquadFilter();
-  bandpass.type = "bandpass";
-  bandpass.frequency.value = 120;
-  bandpass.Q.value = 1.5;
-  source.connect(bandpass);
+  lowpass = getBiquadFilter(audioCtx);
+  lowpass.type = 'lowpass';
+  lowpass.frequency.value = 250;
 
-  // Analizador BPM
   analyzer = await createRealtimeBpmAnalyzer(audioCtx);
-  bandpass.connect(analyzer.node);
 
-  runningMic = true;
+  source.connect(lowpass).connect(analyzer.node);
+
+  micActive = true;
 }
 
-// Iniciar medición de BPM
 function startMeasuring() {
-  if(!runningMic || measuring) return;
+  if (!micActive || measuring) return;
 
   analyzer.on('bpm', data => {
     const bpm = Math.round(data.bpm[0].tempo);
     document.getElementById('bpm').innerText = bpm;
-    document.getElementById('rpm').innerText = bpm <= 110 ? bpm : Math.round(bpm/2);
+    document.getElementById('rpm').innerText = bpm <= 110 ? bpm : Math.round(bpm / 2);
   });
 
   measuring = true;
 }
 
-// Desactivar todo
-function stop() {
-  if(!runningMic) return;
+function stopAll() {
+  if (!micActive) return;
   source.disconnect();
-  bandpass.disconnect();
+  lowpass.disconnect();
   analyzer.node.disconnect();
   audioCtx.close();
   document.getElementById('bpm').innerText = '--';
   document.getElementById('rpm').innerText = '--';
-  runningMic=false;
-  measuring=false;
+  micActive = false;
+  measuring = false;
 }
 </script>
 
