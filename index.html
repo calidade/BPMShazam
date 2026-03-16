@@ -1,3 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detector BPM → RPM Indoor</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+background:#111;
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+min-height:100vh;
+text-align:center;
+}
+
+h1{
+font-size:5vw;
+margin-bottom:30px;
+}
+
+.container{
+width:95%;
+max-width:500px;
+}
+
+.display{
+background:#1b1b1b;
+border-radius:12px;
+padding:25px;
+margin-bottom:25px;
+}
+
+.label{
+font-size:5vw;
+opacity:0.7;
+}
+
+.value{
+font-size:15vw;
+font-weight:bold;
+margin-top:10px;
+}
+
+.buttons{
+display:flex;
+flex-direction:column;
+gap:20px;
+}
+
+button{
+border:none;
+border-radius:12px;
+padding:25px;
+font-size:6vw;
+font-weight:bold;
+cursor:pointer;
+}
+
+.start{
+background:#00c853;
+color:white;
+}
+
+.stop{
+background:#d50000;
+color:white;
+}
+
+button:active{
+transform:scale(0.97);
+}
+
+@media (min-width:700px){
+
+h1{font-size:32px;}
+.label{font-size:22px;}
+.value{font-size:90px;}
+button{font-size:24px;}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>BPM → RPM</h1>
+
+<div class="display">
+<div class="label">BPM detectados</div>
+<div id="bpm" class="value">--</div>
+</div>
+
+<div class="display">
+<div class="label">RPM ciclismo</div>
+<div id="rpm" class="value">--</div>
+</div>
+
+<div class="buttons">
+<button class="start" onclick="startListening()">ACTIVAR MICRÓFONO</button>
+<button class="stop" onclick="stopListening()">DESACTIVAR MICRÓFONO</button>
+</div>
+
+</div>
+
 <script>
 
 let audioContext;
@@ -37,7 +151,7 @@ function stopListening(){
 running=false;
 
 if(stream){
-stream.getTracks().forEach(t=>t.stop());
+stream.getTracks().forEach(track=>track.stop());
 }
 
 if(audioContext){
@@ -58,21 +172,21 @@ if(!running) return;
 
 analyser.getByteTimeDomainData(dataArray);
 
-let max=0;
+let peak=0;
 
 for(let i=0;i<dataArray.length;i++){
 
 let v=Math.abs(dataArray[i]-128);
 
-if(v>max) max=v;
+if(v>peak) peak=v;
 
 }
 
-if(max>60){
+if(peak>70){
 
 let now=performance.now();
 
-if(now-lastBeat>250){
+if(now-lastBeat>300){
 
 if(lastBeat!==0){
 
@@ -117,3 +231,6 @@ document.getElementById("rpm").innerText=rpm;
 }
 
 </script>
+
+</body>
+</html>
