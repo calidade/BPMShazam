@@ -3,21 +3,107 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BPM → RPM con Realtime BPM Analyzer</title>
+<title>BPM → RPM Indoor</title>
 <style>
-body{margin:0;font-family:Arial;background:#111;color:white;text-align:center;padding:30px;}
-#bpm,#rpm{font-size:60px;margin:20px;}
-button{font-size:24px;padding:15px 30px;margin:10px;}
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 6vw;
+  margin-bottom: 30px;
+  text-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+
+.panel {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px 20px;
+  margin-bottom: 30px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.value {
+  font-size: 12vw;
+  font-weight: bold;
+  margin: 10px 0;
+  color: #00ffcc;
+  text-shadow: 0 0 15px rgba(0,255,204,0.6);
+}
+
+.label {
+  font-size: 4vw;
+  opacity: 0.8;
+  margin-bottom: 5px;
+}
+
+button {
+  width: 80%;
+  max-width: 300px;
+  padding: 20px;
+  margin: 15px 0;
+  font-size: 5vw;
+  border: none;
+  border-radius: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+button:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3) inset;
+}
+
+.start {
+  background: #00c853;
+  color: white;
+  box-shadow: 0 6px 15px rgba(0,200,83,0.4);
+}
+
+.stop {
+  background: #d50000;
+  color: white;
+  box-shadow: 0 6px 15px rgba(213,0,0,0.4);
+}
+
+@media (min-width:700px){
+  h1 {font-size: 48px;}
+  .value {font-size: 90px;}
+  .label {font-size: 22px;}
+  button {font-size: 24px;}
+}
 </style>
 </head>
 <body>
 
-<h1>BPM → RPM Indoor</h1>
-<div>BPM: <span id="bpm">--</span></div>
-<div>RPM: <span id="rpm">--</span></div>
+<h1>BPM → RPM</h1>
 
-<button onclick="start()">ACTIVAR MICRÓFONO</button>
-<button onclick="stop()">DESACTIVAR</button>
+<div class="panel">
+  <div class="label">BPM</div>
+  <div id="bpm" class="value">--</div>
+</div>
+
+<div class="panel">
+  <div class="label">RPM Ciclismo</div>
+  <div id="rpm" class="value">--</div>
+</div>
+
+<button class="start" onclick="start()">ACTIVAR MICRÓFONO</button>
+<button class="stop" onclick="stop()">DESACTIVAR</button>
 
 <script src="https://unpkg.com/realtime-bpm-analyzer/dist/realtime-bpm-analyzer.min.js"></script>
 
@@ -25,7 +111,7 @@ button{font-size:24px;padding:15px 30px;margin:10px;}
 let audioCtx, source, analyzer;
 let running = false;
 
-async function start(){
+async function start() {
   if(running) return;
   const stream = await navigator.mediaDevices.getUserMedia({audio:true});
   audioCtx = new AudioContext();
@@ -43,7 +129,7 @@ async function start(){
   running = true;
 }
 
-function stop(){
+function stop() {
   if(!running) return;
   source.disconnect();
   analyzer.node.disconnect();
