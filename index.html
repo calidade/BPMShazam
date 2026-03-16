@@ -45,9 +45,9 @@ h1 {
 }
 
 .label {
-  font-size: 4vw;
-  opacity: 0.8;
+  opacity: .8;
   margin-bottom: 5px;
+  font-size: 4vw;
 }
 
 button {
@@ -68,23 +68,14 @@ button:active {
   box-shadow: 0 4px 8px rgba(0,0,0,0.3) inset;
 }
 
-.start {
-  background: #00c853;
-  color: white;
-  box-shadow: 0 6px 15px rgba(0,200,83,0.4);
-}
-
-.stop {
-  background: #d50000;
-  color: white;
-  box-shadow: 0 6px 15px rgba(213,0,0,0.4);
-}
+.start { background: #00c853; color:white; box-shadow: 0 6px 15px rgba(0,200,83,0.4);}
+.stop { background: #d50000; color:white; box-shadow: 0 6px 15px rgba(213,0,0,0.4); }
 
 @media (min-width:700px){
-  h1 {font-size: 48px;}
-  .value {font-size: 90px;}
-  .label {font-size: 22px;}
-  button {font-size: 24px;}
+  h1 { font-size: 48px; }
+  .value { font-size: 90px; }
+  .label { font-size: 22px; }
+  button { font-size: 24px; }
 }
 </style>
 </head>
@@ -106,19 +97,26 @@ button:active {
 <button class="stop" onclick="stop()">DESACTIVAR</button>
 
 <script src="https://unpkg.com/realtime-bpm-analyzer/dist/realtime-bpm-analyzer.min.js"></script>
-
 <script>
-let audioCtx, source, analyzer;
-let running = false;
+let audioCtx, source, analyzer, bandpass;
+let running=false;
 
 async function start() {
   if(running) return;
+
   const stream = await navigator.mediaDevices.getUserMedia({audio:true});
   audioCtx = new AudioContext();
   source = audioCtx.createMediaStreamSource(stream);
-  analyzer = await createRealtimeBpmAnalyzer(audioCtx);
 
-  source.connect(analyzer.node);
+  // Filtro banda baja para bombo (mejora detección desde altavoz)
+  bandpass = audioCtx.createBiquadFilter();
+  bandpass.type = "bandpass";
+  bandpass.frequency.value = 120; // centro de la banda (Hz)
+  bandpass.Q.value = 1.5;         // ancho de banda
+  source.connect(bandpass);
+
+  analyzer = await createRealtimeBpmAnalyzer(audioCtx);
+  bandpass.connect(analyzer.node);
 
   analyzer.on('bpm', data => {
     const bpm = Math.round(data.bpm[0].tempo);
@@ -132,11 +130,12 @@ async function start() {
 function stop() {
   if(!running) return;
   source.disconnect();
+  bandpass.disconnect();
   analyzer.node.disconnect();
   audioCtx.close();
   document.getElementById('bpm').innerText = '--';
   document.getElementById('rpm').innerText = '--';
-  running = false;
+  running=false;
 }
 </script>
 
