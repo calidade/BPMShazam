@@ -3,190 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BPM → RPM</title>
-
+<title>BPM → RPM con Realtime BPM Analyzer</title>
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#111;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-min-height:100vh;
-text-align:center;
-}
-
-.container{
-width:95%;
-max-width:500px;
-}
-
-.display{
-background:#1b1b1b;
-border-radius:12px;
-padding:25px;
-margin-bottom:25px;
-}
-
-.value{
-font-size:18vw;
-font-weight:bold;
-}
-
-.label{
-opacity:.7;
-}
-
-button{
-width:100%;
-padding:25px;
-margin-top:15px;
-font-size:6vw;
-border:none;
-border-radius:12px;
-}
-
-.start{background:#00c853;color:white;}
-.stop{background:#d50000;color:white;}
-
+body{margin:0;font-family:Arial;background:#111;color:white;text-align:center;padding:30px;}
+#bpm,#rpm{font-size:60px;margin:20px;}
+button{font-size:24px;padding:15px 30px;margin:10px;}
 </style>
 </head>
-
 <body>
 
-<div class="container">
+<h1>BPM → RPM Indoor</h1>
+<div>BPM: <span id="bpm">--</span></div>
+<div>RPM: <span id="rpm">--</span></div>
 
-<div class="display">
-<div class="label">BPM</div>
-<div id="bpm" class="value">--</div>
-</div>
+<button onclick="start()">ACTIVAR MICRÓFONO</button>
+<button onclick="stop()">DESACTIVAR</button>
 
-<div class="display">
-<div class="label">RPM</div>
-<div id="rpm" class="value">--</div>
-</div>
-
-<button class="start" onclick="start()">ACTIVAR MICRÓFONO</button>
-<button class="stop" onclick="stop()">DESACTIVAR</button>
-
-</div>
+<script src="https://unpkg.com/realtime-bpm-analyzer/dist/realtime-bpm-analyzer.min.js"></script>
 
 <script>
-
-let ctx;
-let analyser;
-let data;
-let stream;
-let running=false;
-
-let lastBeat=0;
-let intervals=[];
+let audioCtx, source, analyzer;
+let running = false;
 
 async function start(){
+  if(running) return;
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  audioCtx = new AudioContext();
+  source = audioCtx.createMediaStreamSource(stream);
+  analyzer = await createRealtimeBpmAnalyzer(audioCtx);
 
-if(running) return;
+  source.connect(analyzer.node);
 
-stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  analyzer.on('bpm', data => {
+    const bpm = Math.round(data.bpm[0].tempo);
+    document.getElementById('bpm').innerText = bpm;
+    document.getElementById('rpm').innerText = bpm <= 110 ? bpm : Math.round(bpm/2);
+  });
 
-ctx=new (window.AudioContext||window.webkitAudioContext)();
-
-let source=ctx.createMediaStreamSource(stream);
-
-analyser=ctx.createAnalyser();
-analyser.fftSize=2048;
-
-source.connect(analyser);
-
-data=new Uint8Array(analyser.frequencyBinCount);
-
-running=true;
-
-loop();
-
+  running = true;
 }
 
 function stop(){
-
-running=false;
-
-if(stream){
-stream.getTracks().forEach(t=>t.stop());
+  if(!running) return;
+  source.disconnect();
+  analyzer.node.disconnect();
+  audioCtx.close();
+  document.getElementById('bpm').innerText = '--';
+  document.getElementById('rpm').innerText = '--';
+  running = false;
 }
-
-if(ctx){
-ctx.close();
-}
-
-document.getElementById("bpm").innerText="--";
-document.getElementById("rpm").innerText="--";
-
-intervals=[];
-lastBeat=0;
-
-}
-
-function loop(){
-
-if(!running) return;
-
-analyser.getByteFrequencyData(data);
-
-let energy=0;
-
-for(let i=2;i<30;i++){
-energy+=data[i];
-}
-
-energy/=28;
-
-if(energy>140){
-
-let now=performance.now();
-
-if(now-lastBeat>300){
-
-if(lastBeat!==0){
-
-let interval=now-lastBeat;
-
-intervals.push(interval);
-
-if(intervals.length>8) intervals.shift();
-
-let avg=intervals.reduce((a,b)=>a+b)/intervals.length;
-
-let bpm=Math.round(60000/avg);
-
-update(bpm);
-
-}
-
-lastBeat=now;
-
-}
-
-}
-
-requestAnimationFrame(loop);
-
-}
-
-function update(bpm){
-
-document.getElementById("bpm").innerText=bpm;
-
-let rpm;
-
-if(bpm<=110) rpm=bpm;
-else rpm=Math.round(bpm/2);
-
-document.getElementById("rpm").innerText=rpm;
-
-}
-
 </script>
 
 </body>
