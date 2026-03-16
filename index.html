@@ -3,26 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Detector BPM → RPM Indoor</title>
+<title>BPM → RPM</title>
 
 <style>
 
 body{
 margin:0;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial;
 background:#111;
 color:white;
 display:flex;
-flex-direction:column;
 align-items:center;
 justify-content:center;
 min-height:100vh;
 text-align:center;
-}
-
-h1{
-font-size:5vw;
-margin-bottom:30px;
 }
 
 .container{
@@ -37,54 +31,26 @@ padding:25px;
 margin-bottom:25px;
 }
 
-.label{
-font-size:5vw;
-opacity:0.7;
-}
-
 .value{
-font-size:15vw;
+font-size:18vw;
 font-weight:bold;
-margin-top:10px;
 }
 
-.buttons{
-display:flex;
-flex-direction:column;
-gap:20px;
+.label{
+opacity:.7;
 }
 
 button{
+width:100%;
+padding:25px;
+margin-top:15px;
+font-size:6vw;
 border:none;
 border-radius:12px;
-padding:25px;
-font-size:6vw;
-font-weight:bold;
-cursor:pointer;
 }
 
-.start{
-background:#00c853;
-color:white;
-}
-
-.stop{
-background:#d50000;
-color:white;
-}
-
-button:active{
-transform:scale(0.97);
-}
-
-@media (min-width:700px){
-
-h1{font-size:32px;}
-.label{font-size:22px;}
-.value{font-size:90px;}
-button{font-size:24px;}
-
-}
+.start{background:#00c853;color:white;}
+.stop{background:#d50000;color:white;}
 
 </style>
 </head>
@@ -93,69 +59,65 @@ button{font-size:24px;}
 
 <div class="container">
 
-<h1>BPM → RPM</h1>
-
 <div class="display">
-<div class="label">BPM detectados</div>
+<div class="label">BPM</div>
 <div id="bpm" class="value">--</div>
 </div>
 
 <div class="display">
-<div class="label">RPM ciclismo</div>
+<div class="label">RPM</div>
 <div id="rpm" class="value">--</div>
 </div>
 
-<div class="buttons">
-<button class="start" onclick="startListening()">ACTIVAR MICRÓFONO</button>
-<button class="stop" onclick="stopListening()">DESACTIVAR MICRÓFONO</button>
-</div>
+<button class="start" onclick="start()">ACTIVAR MICRÓFONO</button>
+<button class="stop" onclick="stop()">DESACTIVAR</button>
 
 </div>
 
 <script>
 
-let audioContext;
+let ctx;
 let analyser;
-let dataArray;
+let data;
 let stream;
 let running=false;
 
 let lastBeat=0;
 let intervals=[];
 
-async function startListening(){
+async function start(){
 
 if(running) return;
 
-stream = await navigator.mediaDevices.getUserMedia({audio:true});
+stream=await navigator.mediaDevices.getUserMedia({audio:true});
 
-audioContext = new (window.AudioContext || window.webkitAudioContext)();
+ctx=new (window.AudioContext||window.webkitAudioContext)();
 
-const source = audioContext.createMediaStreamSource(stream);
+let source=ctx.createMediaStreamSource(stream);
 
-analyser = audioContext.createAnalyser();
-analyser.fftSize = 1024;
+analyser=ctx.createAnalyser();
+analyser.fftSize=2048;
 
 source.connect(analyser);
 
-dataArray = new Uint8Array(analyser.fftSize);
+data=new Uint8Array(analyser.frequencyBinCount);
 
 running=true;
 
-detectBeat();
+loop();
 
 }
 
-function stopListening(){
+function stop(){
 
 running=false;
 
 if(stream){
-stream.getTracks().forEach(track=>track.stop());
+stream.getTracks().forEach(t=>t.stop());
 }
 
-if(audioContext){
-audioContext.close();
+if(ctx){
+ctx.close();
 }
 
 document.getElementById("bpm").innerText="--";
@@ -166,23 +128,21 @@ lastBeat=0;
 
 }
 
-function detectBeat(){
+function loop(){
 
 if(!running) return;
 
-analyser.getByteTimeDomainData(dataArray);
+analyser.getByteFrequencyData(data);
 
-let peak=0;
+let energy=0;
 
-for(let i=0;i<dataArray.length;i++){
-
-let v=Math.abs(dataArray[i]-128);
-
-if(v>peak) peak=v;
-
+for(let i=2;i<30;i++){
+energy+=data[i];
 }
 
-if(peak>70){
+energy/=28;
+
+if(energy>140){
 
 let now=performance.now();
 
@@ -194,13 +154,13 @@ let interval=now-lastBeat;
 
 intervals.push(interval);
 
-if(intervals.length>10) intervals.shift();
+if(intervals.length>8) intervals.shift();
 
 let avg=intervals.reduce((a,b)=>a+b)/intervals.length;
 
 let bpm=Math.round(60000/avg);
 
-updateDisplay(bpm);
+update(bpm);
 
 }
 
@@ -210,21 +170,18 @@ lastBeat=now;
 
 }
 
-requestAnimationFrame(detectBeat);
+requestAnimationFrame(loop);
 
 }
 
-function updateDisplay(bpm){
+function update(bpm){
 
 document.getElementById("bpm").innerText=bpm;
 
 let rpm;
 
-if(bpm<=110){
-rpm=bpm;
-}else{
-rpm=Math.round(bpm/2);
-}
+if(bpm<=110) rpm=bpm;
+else rpm=Math.round(bpm/2);
 
 document.getElementById("rpm").innerText=rpm;
 
