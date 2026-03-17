@@ -1,97 +1,68 @@
-* {
-  box-sizing: border-box;
+<style>
+
+body{
+margin:0;
+background:#111;
+color:white;
+font-family:Arial;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+height:100vh;
 }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #1e1e2f, #3a3a6a);
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+#bpm{
+font-size:500px;
+font-weight:bold;
 }
 
-.container {
-  width: 100%;
-  max-width: 420px;
-  padding: 20px;
-  text-align: center;
+#rpm{
+font-size:120px;
+margin-bottom:40px;
+color:#2ecc71;
 }
 
-/* CAJAS CENTRADAS */
-.box {
-  background: rgba(255,255,255,0.1);
-  border-radius: 18px;
-  padding: 25px 15px;
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+button{
+font-size:30px;
+padding:20px 60px;
+cursor:pointer;
+border:none;
+background:#2ecc71;
+color:white;
+border-radius:10px;
 }
 
-.main h2 {
-  font-size: clamp(3.5rem, 10vw, 5rem);
-  margin: 10px 0 0;
-  text-align: center;
+button:active{
+transform:scale(0.95);
 }
 
-.secondary h2 {
-  font-size: clamp(2.5rem, 8vw, 3.5rem);
-  margin: 10px 0 0;
-  text-align: center;
+#reset{
+margin-top:20px;
+background:#e74c3c;
 }
 
-span {
-  font-size: 1rem;
-  opacity: 0.8;
+/* MÓVIL */
+
+@media (max-width: 768px){
+
+#bpm{
+font-size:22vw;
 }
 
-/* BOTONES GRANDES Y RESPONSIVE */
-button {
-  width: 100%;
-  border: none;
-  border-radius: 16px;
-  cursor: pointer;
+#rpm{
+font-size:8vw;
+margin-bottom:40px;
 }
 
-#tapBtn {
-  background: #00c853;
-  color: white;
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  padding: 28px;
-  margin-top: 15px;
+button{
+width:80vw;
+font-size:8vw;
+padding:25px;
+margin:10px 0;
+border-radius:16px;
 }
 
-#tapBtn:active {
-  background: #009624;
 }
 
-#resetBtn {
-  background: #d50000;
-  color: white;
-  font-size: clamp(1rem, 4vw, 1.2rem);
-  padding: 18px;
-  margin-top: 10px;
-}
-
-#resetBtn:active {
-  background: #9b0000;
-}
-
-/* AJUSTES EXTRA PARA MOVIL */
-@media (max-width: 480px) {
-  .container {
-    padding: 15px;
-  }
-
-  .box {
-    padding: 20px 10px;
-  }
-
-  #tapBtn {
-    padding: 30px;
-  }
-}
+</style>
