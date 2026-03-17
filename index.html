@@ -1,86 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BPM → RPM Indoor</title>
-<style>
-body{margin:0;font-family:Arial;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;text-align:center;padding:20px;}
-h1{font-size:6vw;margin-top:20px;}
-.panel{background:rgba(255,255,255,0.05);border-radius:15px;padding:20px;margin:15px auto;width:90%;max-width:400px;}
-.value{font-size:10vw;font-weight:bold;color:#00ffcc;}
-button{width:80%;padding:15px;font-size:5vw;margin:10px;border:none;border-radius:12px;cursor:pointer;}
-.start{background:#00c853;color:white;}
-.measure{background:#2979ff;color:white;}
-.stop{background:#d50000;color:white;}
-</style>
+  <meta charset="UTF-8">
+  <title>App</title>
 </head>
 <body>
+  <h1 id="texto">Hola</h1>
+  <button onclick="cambiar()">Cambiar</button>
 
-<h1>BPM → RPM</h1>
-
-<div class="panel">
-  <div>BPM</div>
-  <div id="bpm" class="value">--</div>
-</div>
-
-<div class="panel">
-  <div>RPM</div>
-  <div id="rpm" class="value">--</div>
-</div>
-
-<button class="start" onclick="activateMic()">ACTIVAR MICRÓFONO</button>
-<button class="measure" onclick="startMeasuring()">EMPEZAR A CONTAR BPM</button>
-<button class="stop" onclick="stopAll()">DESACTIVAR</button>
-
-<script type="module">
-import { createRealtimeBpmAnalyzer, getBiquadFilter } from 'https://cdn.jsdelivr.net/npm/realtime-bpm-analyzer@latest/+esm';
-
-let audioCtx, source, analyzer, lowpass;
-let micActive = false;
-let measuring = false;
-
-async function activateMic() {
-  if (micActive) return;
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  audioCtx = new AudioContext();
-  source = audioCtx.createMediaStreamSource(stream);
-
-  lowpass = getBiquadFilter(audioCtx);
-  lowpass.type = 'lowpass';
-  lowpass.frequency.value = 250;
-
-  analyzer = await createRealtimeBpmAnalyzer(audioCtx);
-
-  source.connect(lowpass).connect(analyzer.node);
-
-  micActive = true;
-}
-
-function startMeasuring() {
-  if (!micActive || measuring) return;
-
-  analyzer.on('bpm', data => {
-    const bpm = Math.round(data.bpm[0].tempo);
-    document.getElementById('bpm').innerText = bpm;
-    document.getElementById('rpm').innerText = bpm <= 110 ? bpm : Math.round(bpm / 2);
-  });
-
-  measuring = true;
-}
-
-function stopAll() {
-  if (!micActive) return;
-  source.disconnect();
-  lowpass.disconnect();
-  analyzer.node.disconnect();
-  audioCtx.close();
-  document.getElementById('bpm').innerText = '--';
-  document.getElementById('rpm').innerText = '--';
-  micActive = false;
-  measuring = false;
-}
-</script>
-
+  <script src="app.js"></script>
 </body>
 </html>
