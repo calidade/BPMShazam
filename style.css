@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -6,56 +10,59 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .container {
-  text-align: center;
-  width: 90%;
+  width: 100%;
   max-width: 420px;
+  padding: 20px;
+  text-align: center;
 }
 
-h1 {
-  margin-bottom: 20px;
-  font-size: 1.4em;
-  opacity: 0.8;
-}
-
+/* CAJAS CENTRADAS */
 .box {
   background: rgba(255,255,255,0.1);
   border-radius: 18px;
-  padding: 20px;
+  padding: 25px 15px;
   margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .main h2 {
-  font-size: 4em;
+  font-size: clamp(3.5rem, 10vw, 5rem);
   margin: 10px 0 0;
+  text-align: center;
 }
 
 .secondary h2 {
-  font-size: 3em;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
   margin: 10px 0 0;
+  text-align: center;
 }
 
 span {
-  font-size: 0.9em;
-  opacity: 0.7;
+  font-size: 1rem;
+  opacity: 0.8;
 }
 
+/* BOTONES GRANDES Y RESPONSIVE */
 button {
   width: 100%;
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
   cursor: pointer;
 }
 
 #tapBtn {
   background: #00c853;
   color: white;
-  font-size: 1.6em;
-  padding: 20px;
-  margin-top: 10px;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  padding: 28px;
+  margin-top: 15px;
 }
 
 #tapBtn:active {
@@ -65,11 +72,26 @@ button {
 #resetBtn {
   background: #d50000;
   color: white;
-  font-size: 1em;
-  padding: 12px;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  padding: 18px;
   margin-top: 10px;
 }
 
 #resetBtn:active {
   background: #9b0000;
+}
+
+/* AJUSTES EXTRA PARA MOVIL */
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+
+  .box {
+    padding: 20px 10px;
+  }
+
+  #tapBtn {
+    padding: 30px;
+  }
 }
